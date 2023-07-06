@@ -81,9 +81,6 @@ st.write(
 def start_summarize_runner(website_url: Optional[str]):
     global shared_dict, thread_event
     
-    if not website_url:
-        return
-    
     shared_dict['output'] = ""
     thread_event.set()
     thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
@@ -110,32 +107,21 @@ with  col2:
     chat_response_button = st.button(
             label="Send Response",
             type="primary",
-           # on_click=start_summarize_runner,
+            on_click=start_summarize_runner,
             args=(chat_response,),
             key='text_input_button')
     
     progress_bar_slot = st.empty()
-    if chat_response_button:
-        for num, update in summarize(chat_response, chatgpt_util, tokenizer, thread_event, shared_dict):
-            progress_bar_slot.progress(num, update)
+
+
+
+if st.session_state['exec_thread'] is not None:
     
-    progress_bar_slot.empty()
-            
+    while thread_event.is_set():    
+        progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
+        time.sleep(1)
         
-            
-
-ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='final_ai_output')
-    
-
-
-
-# if st.session_state['exec_thread'] is not None:
-    
-#     logging.error(f"in here")
-#     while thread_event.is_set():    
-#         progress_bar_slot.progress(1)
-#         time.sleep(1)
-    
-    
-    
-    
+    progress_bar_slot.progress(100, "Done!")
+    ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='final_ai_output')
+    st.session_state['exec_thread'] = None
+    progress_bar_slot.empty()
