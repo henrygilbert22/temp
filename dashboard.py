@@ -115,17 +115,27 @@ with  col2:
             key='text_input_button')
     
     progress_bar_slot = st.empty()
-
-
-
-if st.session_state['exec_thread'] is not None:
+    if chat_response_button:
+        for num, update in summarize(chat_response, chatgpt_util, tokenizer, thread_event, shared_dict):
+            progress_bar_slot.progress(num, update)
     
-    logging.error(f"in here")
-    while thread_event.is_set():    
-        progress_bar_slot.progress(1)
-        time.sleep(1)
-    
-    progress_bar_slot.progress(100, "Done!")
-    ai_output_area.text_area(label="AI Output", value=shared_dict.get('output', 'processing'), height=400, key='final_ai_output')
-    st.session_state['exec_thread'] = None
     progress_bar_slot.empty()
+            
+        
+            
+
+ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='final_ai_output')
+    
+
+
+
+# if st.session_state['exec_thread'] is not None:
+    
+#     logging.error(f"in here")
+#     while thread_event.is_set():    
+#         progress_bar_slot.progress(1)
+#         time.sleep(1)
+    
+    
+    
+    
