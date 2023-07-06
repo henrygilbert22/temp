@@ -144,13 +144,13 @@ with  col2:
     
 if st.session_state['exec_thread'] is not None:
     
-    ai_output_area.text_area(label="AI Output", value="Processing...", height=400)
+   # ai_output_area.text_area(label="AI Output", value="Processing...", height=400)
     exec_thread: Thread = st.session_state['exec_thread']
     while thread_event.is_set():
         progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
         time.sleep(1)
         
     progress_bar_slot.progress(100, "Done!")
-    ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400)
+   # ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400)
     st.session_state['exec_thread'] = None
     progress_bar_slot.empty()
