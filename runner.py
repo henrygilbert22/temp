@@ -54,7 +54,7 @@ def start_summarize_runner_two(website_url: Optional[str], chatgpt_util: ChatGPT
         future = executor.submit(summarize, website_url, chatgpt_util, tokenizer, thread_event, shared_dict)
     for thread in executor._threads:
         add_script_run_ctx(thread)
-        return future.result()
+    return future.result()
     
     # shared_dict['output'] = ""
     # thread_event.set()
