@@ -31,7 +31,7 @@ def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, 
     logging.info(f"website_summary:\n {shared_dict[website_url]}")
     # logging.info(f"system_prompt:\n {st.session_state['system_prompt']}")
     
-    formatted_user_prompt = _USER_PROMPT.format(COMPANY_TEXT=shared_dict[website_url])
+    formatted_user_prompt = _USER_PROMPT.format(COMPANY_TEXT='test')
     messages = [
         {'role': 'system', 'content': 'test'},
         {'role': 'user', 'content': formatted_user_prompt}]
