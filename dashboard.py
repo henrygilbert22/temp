@@ -123,6 +123,6 @@ if st.session_state['exec_thread'] is not None:
         time.sleep(1)
     
     progress_bar_slot.progress(100, "Done!")
-    ai_output_area.text_area(label="AI Output", value=shared_dict.get()'output', 'processing'), height=400, key='final_ai_output')
+    ai_output_area.text_area(label="AI Output", value=shared_dict.get('output', 'processing'), height=400, key='final_ai_output')
     st.session_state['exec_thread'] = None
     progress_bar_slot.empty()
