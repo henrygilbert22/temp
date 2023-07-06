@@ -109,7 +109,7 @@ with  col2:
             label="Send Response",
             type="primary",
             on_click=start_summarize_runner,
-            args=(chat_response,chatgpt_util, tokenizer, thread_event, shared_dict,),
+            args=(chat_response,),
             key='text_input_button')
     
     progress_bar_slot = st.empty()
