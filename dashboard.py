@@ -107,8 +107,8 @@ with  col2:
     chat_response_button = st.button(
             label="Send Response",
             type="primary",
-            on_click=start_summarize_runner,
-            args=(chat_response,),
+            on_click=summarize,
+            args=(chat_response,chatgpt_util, tokenizer, thread_event, shared_dict,),
             key='text_input_button')
     
     progress_bar_slot = st.empty()
