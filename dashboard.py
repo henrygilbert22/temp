@@ -94,12 +94,16 @@ logging.error(f"exec_thread: {st.session_state['exec_thread']}")
 
 if st.session_state['exec_thread'] is None:
     
+
+    progress_bar_slot = st.empty()
+    ai_output_area = st.empty()
+    
     with st.empty():
     
         col1, col2 = st.columns(2)
 
         with col1:
-            ai_output_area = st.empty()
+            
             ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='ai_output_1')
 
         with  col2:
@@ -114,7 +118,7 @@ if st.session_state['exec_thread'] is None:
                     args=(chat_response,),
                     key='text_input_button')
             
-            progress_bar_slot = st.empty()
+            
 
 
 
