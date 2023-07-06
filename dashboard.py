@@ -84,6 +84,7 @@ def start_summarize_runner(website_url: Optional[str]):
     thread_event.set()
     thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
     cntx_thread = add_script_run_ctx(thread)
+    ai_output_area.empty()
     cntx_thread.start()
     st.session_state['exec_thread'] = cntx_thread
 
