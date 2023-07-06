@@ -110,7 +110,7 @@ with  col2:
     chat_response_button = st.button(
             label="Send Response",
             type="primary",
-            on_click=start_summarize_runner,
+           # on_click=start_summarize_runner,
             args=(chat_response,),
             key='text_input_button')
     
