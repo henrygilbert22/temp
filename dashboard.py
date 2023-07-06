@@ -117,6 +117,7 @@ with  col2:
 
 if st.session_state['exec_thread'] is not None:
     
+    logging.error(f"in here")
     while thread_event.is_set():    
         progress_bar_slot.progress(1)
         time.sleep(1)
