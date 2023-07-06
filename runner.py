@@ -13,7 +13,7 @@ _USER_PROMPT = """\
     ####################
     """
 
-def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, shared_dict, ) -> str:
+def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, shared_dict, stystem_prompt) -> str:
     # st.session_state['exec_thread'] = "running"
     
     if website_url is None:
@@ -33,7 +33,7 @@ def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, 
     
     formatted_user_prompt = _USER_PROMPT.format(COMPANY_TEXT=shared_dict[website_url])
     messages = [
-        {'role': 'system', 'content': 'test'},
+        {'role': 'system', 'content': stystem_prompt},
         {'role': 'user', 'content': formatted_user_prompt}]
     
     # st.session_state['progress_text'] = "Generating AI suggestions..."
@@ -41,11 +41,11 @@ def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, 
     ai_suggestions = chatgpt_util.get_chat_completion(
         messages=messages,
         model='gpt-4')[0]
-    shared_dict['output']
+    return ai_suggestions
     # st.session_state['ai_output'] = ai_suggestions
     # st.session_state['progress_text'] = "Generating user summary..."    
 
-def start_summarize_runner_two(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, shared_dict):
+def start_summarize_runner_two(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, shared_dict, stystem_prompt):
     
-    future = ThreadPoolExecutor(max_workers=1).submit(summarize, website_url, chatgpt_util, tokenizer, shared_dict,)
+    future = ThreadPoolExecutor(max_workers=1).submit(summarize, website_url, chatgpt_util, tokenizer, shared_dict, stystem_prompt,)
     shared_dict['future'] = future
