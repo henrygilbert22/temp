@@ -81,6 +81,7 @@ st.write(
 def start_summarize_runner(website_url: Optional[str]):
     global shared_dict, thread_event
     
+    shared_dict['output'] = ""
     thread_event.set()
     thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
     cntx_thread = add_script_run_ctx(thread)
@@ -91,45 +92,36 @@ def start_summarize_runner(website_url: Optional[str]):
 
 logging.error(f"exec_thread: {st.session_state['exec_thread']}")
 
-progress_bar_slot = st.empty()
-ai_output_area = st.empty()
-chat_response = st.empty()
-chat_response_button = st.empty()
-
-if st.session_state['exec_thread'] is None:
     
+col1, col2 = st.columns(2)
 
-    with st.empty():
+with col1:
+    ai_output_area = st.empty()
+    ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='ai_output_1')
+
+with  col2:
     
-        col1, col2 = st.columns(2)
-
-        with col1:
-            
-            ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='ai_output_1')
-
-        with  col2:
-            
-            st.text_area(label="System Prompt", value=st.session_state['system_prompt'], height=200, key='system_prompt_input')
-            chat_response.text_input(label="Enter a website URL to summarize and get AI suggestions", key='text_input')
-            
-            chat_response_button.button(
-                    label="Send Response",
-                    type="primary",
-                    on_click=start_summarize_runner,
-                    args=(chat_response,),
-                    key='text_input_button')
-            
-            
+    st.text_area(label="System Prompt", value=st.session_state['system_prompt'], height=200, key='system_prompt_input')
+    chat_response = st.text_input(label="Enter a website URL to summarize and get AI suggestions", key='text_input')
+    
+    chat_response_button = st.button(
+            label="Send Response",
+            type="primary",
+            on_click=start_summarize_runner,
+            args=(chat_response,),
+            key='text_input_button')
+    
+    progress_bar_slot = st.empty()
 
 
 
 if st.session_state['exec_thread'] is not None:
     
     while thread_event.is_set():    
-        progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
+        progress_bar_slot.progress(1)
         time.sleep(1)
         
     progress_bar_slot.progress(100, "Done!")
-    ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='final_ai_output')
+    ai_output_area.text_area(label="AI Output", value=shared_dict['output'], height=400, key='final_ai_output')
     st.session_state['exec_thread'] = None
     progress_bar_slot.empty()

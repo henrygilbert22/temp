@@ -18,15 +18,15 @@ def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, 
     if website_url is None:
         return ""
     
-    st.session_state['progress_num'] = 10
-    st.session_state['progress_text'] = "Crawling website..."
+    # st.session_state['progress_num'] = 10
+    # st.session_state['progress_text'] = "Crawling website..."
     logging.info(f"cache hit: {website_url in shared_dict}")
     if website_url not in shared_dict:
         logging.info(f'Website url not in cache: {website_url} \n Cache: {shared_dict.keys()}')
         shared_dict[website_url] = crawl(website_url, chatgpt_util, tokenizer)    
     
-    st.session_state['progress_text'] = "Generating system prompt..."
-    st.session_state['progress_num'] = 25
+    # st.session_state['progress_text'] = "Generating system prompt..."
+    # st.session_state['progress_num'] = 25
     logging.info(f"website_summary:\n {shared_dict[website_url]}")
     logging.info(f"system_prompt:\n {st.session_state['system_prompt']}")
     
@@ -35,11 +35,12 @@ def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, 
         {'role': 'system', 'content': st.session_state['system_prompt']},
         {'role': 'user', 'content': formatted_user_prompt}]
     
-    st.session_state['progress_text'] = "Generating AI suggestions..."
-    st.session_state['progress_num'] = 50
+    # st.session_state['progress_text'] = "Generating AI suggestions..."
+    # st.session_state['progress_num'] = 50
     ai_suggestions = chatgpt_util.get_chat_completion(
         messages=messages,
         model='gpt-4')[0]
     
-    st.session_state['ai_output'] = ai_suggestions
+    # st.session_state['ai_output'] = ai_suggestions
+    shared_dict['output'] = ai_suggestions
     thread_event.clear()
