@@ -1,6 +1,6 @@
 import tiktoken
 import streamlit as st
-from streamlit.runtime.scriptrunner import add_script_run_ctx, start_summarize_runner_two
+from streamlit.runtime.scriptrunner import add_script_run_ctx
 
 st.set_page_config(layout="wide")
 import time
@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 
 from threading import Thread, Event
 from chatgpt_util import ChatGPTUtil
-from runner import summarize
+from runner import summarize, start_summarize_runner_two
 
 @st.cache_resource
 def get_chatgpt_util():
