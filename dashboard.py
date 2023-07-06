@@ -104,11 +104,12 @@ with  col2:
     chat_response = st.text_input(label="Enter a website URL to summarize and get AI suggestions", key='text_input')
     
     chat_response_button = st.button(
-            label="Send Response",
+            label="GO",
             type="primary",
             on_click=summarize,
             args=(chat_response,chatgpt_util, tokenizer, thread_event, shared_dict,),
             key='text_input_button')
+    
     
     progress_bar_slot = st.empty()
 

@@ -14,7 +14,7 @@ _USER_PROMPT = """\
     """
 
 def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, thread_event, shared_dict) -> str:
-    
+    st.session_state['exec_thread'] = "running"
     
     if website_url is None:
         return ""
