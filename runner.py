@@ -13,7 +13,7 @@ _USER_PROMPT = """\
     ####################
     """
 
-def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, thread_event, shared_dict) -> str:
+def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, shared_dict, ) -> str:
     # st.session_state['exec_thread'] = "running"
     
     if website_url is None:
@@ -31,7 +31,7 @@ def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, 
     logging.info(f"website_summary:\n {shared_dict[website_url]}")
     # logging.info(f"system_prompt:\n {st.session_state['system_prompt']}")
     
-    formatted_user_prompt = _USER_PROMPT.format(COMPANY_TEXT='test')
+    formatted_user_prompt = _USER_PROMPT.format(COMPANY_TEXT=shared_dict[website_url])
     messages = [
         {'role': 'system', 'content': 'test'},
         {'role': 'user', 'content': formatted_user_prompt}]
@@ -41,21 +41,11 @@ def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, 
     ai_suggestions = chatgpt_util.get_chat_completion(
         messages=messages,
         model='gpt-4')[0]
-    
+    shared_dict['output']
     # st.session_state['ai_output'] = ai_suggestions
-    thread_event.clear()
-    
+    # st.session_state['progress_text'] = "Generating user summary..."    
 
-def start_summarize_runner_two(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, thread_event, shared_dict):
+def start_summarize_runner_two(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, shared_dict):
     
-    
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(summarize, website_url, chatgpt_util, tokenizer, thread_event, shared_dict,)
-        yield future.result()
-    
-    # shared_dict['output'] = ""
-    # thread_event.set()
-    # thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
-    # cntx_thread = add_script_run_ctx(thread)
-    # cntx_thread.start()
-    # st.session_state['exec_thread'] = cntx_thread
+    future = ThreadPoolExecutor(max_workers=1).submit(summarize, website_url, chatgpt_util, tokenizer, shared_dict,)
+    shared_dict['future'] = future

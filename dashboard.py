@@ -1,7 +1,7 @@
 import tiktoken
 import streamlit as st
 from streamlit.runtime.scriptrunner import add_script_run_ctx
-
+from concurrent.futures import Future
 st.set_page_config(layout="wide")
 import time
 
@@ -115,9 +115,10 @@ with  col2:
 
 
 
-if st.session_state['exec_thread'] is not None:
+if 'future' in shared_dict:
     
-    while thread_event.is_set():    
+    future: Future = shared_dict['future']
+    while future.running():    
         progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
         time.sleep(1)
         
