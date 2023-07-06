@@ -51,7 +51,7 @@ def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, 
 def start_summarize_runner_two(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, thread_event, shared_dict):
     
     with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(summarize, website_url, chatgpt_util, tokenizer, thread_event, shared_dict)
+        future = executor.submit(summarize, website_url, chatgpt_util, tokenizer, thread_event, shared_dict,)
     for thread in executor._threads:
         add_script_run_ctx(thread)
     return future.result()
