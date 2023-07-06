@@ -91,7 +91,14 @@ def start_summarize_runner(website_url: Optional[str]):
 
 logging.error(f"exec_thread: {st.session_state['exec_thread']}")
 
+ 
+def runner(chat_response,chatgpt_util, tokenizer, shared_dict):
     
+    with st.spinner('Wait for it...'):
+        summarize(chat_response,chatgpt_util, tokenizer, shared_dict, st.session_state['system_prompt'])
+    
+    
+
 col1, col2 = st.columns(2)
 
 with col1:
@@ -106,23 +113,12 @@ with  col2:
     chat_response_button = st.button(
             label="GO",
             type="primary",
-            on_click=summarize,
-            args=(chat_response,chatgpt_util, tokenizer, shared_dict, st.session_state['system_prompt']),
+            on_click=runner,
+            args=(chat_response,chatgpt_util, tokenizer, shared_dict),
             key='text_input_button')
     
     
     progress_bar_slot = st.empty()
 
 
-# if 'future' in shared_dict:
-    
-#     future: Future = shared_dict['future']
-#     while future.running():    
-#         progress_bar_slot.progress(1, 'Loading AI Output...')
-#         time.sleep(1)
-        
-#     progress_bar_slot.progress(100, "Done!")
 ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='final_ai_output')
-    # st.session_state['exec_thread'] = None
-    # progress_bar_slot.empty()
-    # shared_dict.pop('future')
