@@ -2,3 +2,4 @@ tiktoken
 openai
 streamlit
 retry
+backoff
