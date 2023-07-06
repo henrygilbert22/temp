@@ -90,6 +90,8 @@ def start_summarize_runner(website_url: Optional[str]):
 
 
 logging.error(f"exec_thread: {st.session_state['exec_thread']}")
+
+
 if st.session_state['exec_thread'] is None:
     
     col1, col2 = st.columns(2)
@@ -115,6 +117,27 @@ if st.session_state['exec_thread'] is None:
 
 
 if st.session_state['exec_thread'] is not None:
+    
+    col1, col2 = st.columns(2)
+
+    with col1:
+        ai_output_area = st.empty()
+        ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='ai_output_1')
+
+    with  col2:
+        
+        st.text_area(label="System Prompt", value=st.session_state['system_prompt'], height=200, key='system_prompt_input')
+        chat_response = st.text_input(label="Enter a website URL to summarize and get AI suggestions", key='text_input')
+        
+        chat_response_button = st.button(
+                label="Send Response",
+                type="primary",
+                on_click=start_summarize_runner,
+                args=(chat_response,),
+                key='text_input_button')
+        
+        progress_bar_slot = st.empty()
+    
     
     while thread_event.is_set():    
         progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
