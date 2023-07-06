@@ -90,7 +90,7 @@ def start_summarize_runner(website_url: Optional[str]):
 
 
 logging.error(f"exec_thread: {st.session_state['exec_thread']}")
-if st.session_state['exec_thread'] is not None:
+if st.session_state['exec_thread'] is None:
     
     col1, col2 = st.columns(2)
 
@@ -115,7 +115,6 @@ if st.session_state['exec_thread'] is not None:
 
 
 if st.session_state['exec_thread'] is not None:
-    #ai_output_area.empty()
     
     while thread_event.is_set():    
         progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
