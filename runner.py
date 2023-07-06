@@ -2,7 +2,7 @@ from typing import Optional
 import logging
 logging.basicConfig(level=logging.INFO)
 from streamlit.runtime.scriptrunner import add_script_run_ctx
-
+from concurrent.futures import ThreadPoolExecutor
 import streamlit as st
 from threading import Thread
 
@@ -50,9 +50,13 @@ def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, 
 
 def start_summarize_runner_two(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, thread_event, shared_dict):
     
-    shared_dict['output'] = ""
-    thread_event.set()
-    thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
-    cntx_thread = add_script_run_ctx(thread)
-    cntx_thread.start()
-    st.session_state['exec_thread'] = cntx_thread
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(summarize, website_url, chatgpt_util, tokenizer, thread_event, shared_dict)
+        return future.result()
+    
+    # shared_dict['output'] = ""
+    # thread_event.set()
+    # thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
+    # cntx_thread = add_script_run_ctx(thread)
+    # cntx_thread.start()
+    # st.session_state['exec_thread'] = cntx_thread
