@@ -107,7 +107,7 @@ with  col2:
             label="GO",
             type="primary",
             on_click=start_summarize_runner_two,
-            args=(chat_response,chatgpt_util, tokenizer, shared_dict,),
+            args=(chat_response,chatgpt_util, tokenizer, shared_dict),
             key='text_input_button')
     
     
