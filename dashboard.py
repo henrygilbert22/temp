@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 
 from threading import Thread, Event
 from chatgpt_util import ChatGPTUtil
-from runner import summarize, start_summarize_runner_two
+from runner import summarize
 
 @st.cache_resource
 def get_chatgpt_util():
@@ -106,13 +106,12 @@ with  col2:
     chat_response_button = st.button(
             label="GO",
             type="primary",
-            on_click=start_summarize_runner_two,
+            on_click=summarize,
             args=(chat_response,chatgpt_util, tokenizer, shared_dict, st.session_state['system_prompt']),
             key='text_input_button')
     
     
     progress_bar_slot = st.empty()
-
 
 
 if 'future' in shared_dict:
