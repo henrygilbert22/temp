@@ -1,6 +1,6 @@
 import tiktoken
 import streamlit as st
-from streamlit.runtime.scriptrunner import add_script_run_ctx
+from streamlit.runtime.scriptrunner import add_script_run_ctx, start_summarize_runner_two
 
 st.set_page_config(layout="wide")
 import time
@@ -106,7 +106,7 @@ with  col2:
     chat_response_button = st.button(
             label="GO",
             type="primary",
-            on_click=summarize,
+            on_click=start_summarize_runner_two,
             args=(chat_response,chatgpt_util, tokenizer, thread_event, shared_dict,),
             key='text_input_button')
     
