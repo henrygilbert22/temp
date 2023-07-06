@@ -84,6 +84,10 @@ def start_summarize_runner(website_url: Optional[str]):
     thread_event.set()
     thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
     cntx_thread = add_script_run_ctx(thread)
+    
+    ai_output_area.empty()
+    chat_response_button.empty()
+    chat_response_button.empty()
     cntx_thread.start()
     
     st.session_state['exec_thread'] = cntx_thread
@@ -99,8 +103,11 @@ with col1:
 with  col2:
     
     st.text_area(label="System Prompt", value=st.session_state['system_prompt'], height=200, key='system_prompt_input')
-    chat_response = st.text_input(label="Enter a website URL to summarize and get AI suggestions", key='text_input')
-    chat_response_button = st.button(
+    chat_response = st.empty()
+    chat_response.text_input(label="Enter a website URL to summarize and get AI suggestions", key='text_input')
+    
+    chat_response_button = st.empty()
+    chat_response_button.button(
             label="Send Response",
             type="primary",
             on_click=start_summarize_runner,
