@@ -81,6 +81,9 @@ st.write(
 def start_summarize_runner(website_url: Optional[str]):
     global shared_dict, thread_event
     
+    if not website_url:
+        return
+    
     shared_dict['output'] = ""
     thread_event.set()
     thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
