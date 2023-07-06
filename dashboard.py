@@ -124,5 +124,5 @@ def main():
         st.session_state['exec_thread'] = None
         progress_bar_slot.empty()
 
-if __name__ == '__main__':
+if __name__ == '__main__' and not st.session_state['exec_thread']:
     main()
