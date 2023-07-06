@@ -84,8 +84,8 @@ def start_summarize_runner(website_url: Optional[str]):
     thread_event.set()
     thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
     cntx_thread = add_script_run_ctx(thread)
-    ai_output_area.empty()
     cntx_thread.start()
+    
     st.session_state['exec_thread'] = cntx_thread
 
 col1, col2 = st.columns(2)
@@ -110,6 +110,7 @@ with  col2:
 
 
 if st.session_state['exec_thread'] is not None:
+    ai_output_area.empty()
     
     while thread_event.is_set():    
         progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
