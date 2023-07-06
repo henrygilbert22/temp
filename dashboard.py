@@ -11,8 +11,7 @@ logging.basicConfig(level=logging.INFO)
 
 from threading import Thread, Event
 from chatgpt_util import ChatGPTUtil
-from web_crawler import crawl
-
+from runner import summarize
 
 @st.cache_resource
 def get_chatgpt_util():
@@ -47,11 +46,7 @@ SYSTEM_PROMPT = """\
     For each use case, explain in laymans's terms how the AI system would work and how it would benefit the buisness.
     """
     
-_USER_PROMPT = """\
-    ### COMPANY TEXT ###
-    {COMPANY_TEXT}
-    ####################
-    """
+
     
 if "exec_thread" not in st.session_state:
     st.session_state['exec_thread'] = None
@@ -64,44 +59,12 @@ if "system_prompt" not in st.session_state:
 if "ai_output" not in st.session_state:
     st.session_state['ai_output'] = ""
     
-
-
-def summarize(website_url: Optional[str]) -> str:
-    global shared_dict, thread_event
-    
-    if website_url is None:
-        return ""
-    
-    thread_event.set()
-    st.session_state['progress_num'] = 10
-    st.session_state['progress_text'] = "Crawling website..."
-    logging.info(f"cache hit: {website_url in shared_dict}")
-    if website_url not in shared_dict:
-        logging.info(f'Website url not in cache: {website_url} \n Cache: {shared_dict.keys()}')
-        shared_dict[website_url] = crawl(website_url, chatgpt_util, tokenizer)    
-    
-    st.session_state['progress_text'] = "Generating system prompt..."
-    st.session_state['progress_num'] = 25
-    logging.info(f"website_summary:\n {shared_dict[website_url]}")
-    logging.info(f"system_prompt:\n {st.session_state['system_prompt']}")
-    
-    formatted_user_prompt = _USER_PROMPT.format(COMPANY_TEXT=shared_dict[website_url])
-    messages = [
-        {'role': 'system', 'content': st.session_state['system_prompt']},
-        {'role': 'user', 'content': formatted_user_prompt}]
-    
-    st.session_state['progress_text'] = "Generating AI suggestions..."
-    st.session_state['progress_num'] = 50
-    ai_suggestions = chatgpt_util.get_chat_completion(
-        messages=messages,
-        model='gpt-4')[0]
-    
-    st.session_state['ai_output'] = ai_suggestions
-    thread_event.clear()
     
 def start_summarize_runner(website_url: Optional[str]):
+    global shared_dict, thread_event
     
-    thread = Thread(target=summarize, args=(website_url,), daemon=True)
+    thread_event.set()
+    thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
     cntx_thread = add_script_run_ctx(thread)
     cntx_thread.start()
     st.session_state['exec_thread'] = cntx_thread
@@ -142,15 +105,12 @@ with  col2:
     progress_bar_slot = st.empty()
 
     
-if st.session_state['exec_thread'] is not None:
-    
-   # ai_output_area.text_area(label="AI Output", value="Processing...", height=400)
-    exec_thread: Thread = st.session_state['exec_thread']
-    while thread_event.is_set():
-        progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
-        time.sleep(1)
+while thread_event.is_set():    
+    progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
+    time.sleep(1)
         
-    progress_bar_slot.progress(100, "Done!")
-   # ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400)
-    st.session_state['exec_thread'] = None
-    progress_bar_slot.empty()
+progress_bar_slot.progress(100, "Done!")
+ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='final_ai_output')
+st.session_state['exec_thread'] = None
+progress_bar_slot.empty()
+
