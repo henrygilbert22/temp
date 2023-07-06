@@ -3,3 +3,4 @@ openai
 streamlit
 retry
 backoff
+bs4
