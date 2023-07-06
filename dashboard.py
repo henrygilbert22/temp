@@ -60,14 +60,7 @@ if "ai_output" not in st.session_state:
     st.session_state['ai_output'] = ""
     
     
-def start_summarize_runner(website_url: Optional[str]):
-    global shared_dict, thread_event
-    
-    thread_event.set()
-    thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
-    cntx_thread = add_script_run_ctx(thread)
-    cntx_thread.start()
-    st.session_state['exec_thread'] = cntx_thread
+
 
     
 st.title("Kate's AI Assistant")
@@ -85,7 +78,14 @@ st.write(
     unsafe_allow_html=True,
 )
 
-
+def start_summarize_runner(website_url: Optional[str]):
+    global shared_dict, thread_event
+    
+    thread_event.set()
+    thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
+    cntx_thread = add_script_run_ctx(thread)
+    cntx_thread.start()
+    st.session_state['exec_thread'] = cntx_thread
 
 col1, col2 = st.columns(2)
 
