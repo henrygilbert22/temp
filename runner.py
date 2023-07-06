@@ -13,12 +13,13 @@ _USER_PROMPT = """\
     ####################
     """
 
-def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, shared_dict, stystem_prompt) -> str:    
+def summarize(website_url: Optional[str], chatgpt_util: ChatGPTUtil, tokenizer, shared_dict, stystem_prompt):    
     if website_url is None:
         return ""
     
     st.session_state['progress_num'] = 10
     st.session_state['progress_text'] = "Crawling website..."
+
     logging.info(f"cache hit: {website_url in shared_dict}")
     if website_url not in shared_dict:
         logging.info(f'Website url not in cache: {website_url} \n Cache: {shared_dict.keys()}')

@@ -114,15 +114,15 @@ with  col2:
     progress_bar_slot = st.empty()
 
 
-if 'future' in shared_dict:
+# if 'future' in shared_dict:
     
-    future: Future = shared_dict['future']
-    while future.running():    
-        progress_bar_slot.progress(1, 'Loading AI Output...')
-        time.sleep(1)
+#     future: Future = shared_dict['future']
+#     while future.running():    
+#         progress_bar_slot.progress(1, 'Loading AI Output...')
+#         time.sleep(1)
         
-    progress_bar_slot.progress(100, "Done!")
-    ai_output_area.text_area(label="AI Output", value=future.result(), height=400, key='final_ai_output')
-    st.session_state['exec_thread'] = None
-    progress_bar_slot.empty()
-    shared_dict.pop('future')
+#     progress_bar_slot.progress(100, "Done!")
+ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='final_ai_output')
+    # st.session_state['exec_thread'] = None
+    # progress_bar_slot.empty()
+    # shared_dict.pop('future')
