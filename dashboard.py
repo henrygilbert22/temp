@@ -66,7 +66,7 @@ def start_summarize_runner(website_url: Optional[str]):
     thread_event.set()
     thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
     cntx_thread = add_script_run_ctx(thread)
-   # cntx_thread.start()
+    cntx_thread.start()
     st.session_state['exec_thread'] = cntx_thread
 
     
@@ -103,18 +103,18 @@ with  col2:
             on_click=start_summarize_runner,
             args=(chat_response,))
     
-    if st.session_state['exec_thread']:
-        st.session_state['exec_thread'].start()
     progress_bar_slot = st.empty()
 
 
+
+if st.session_state['exec_thread'] is not None:
     
-while thread_event.is_set():    
-    progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
-    time.sleep(1)
+    while thread_event.is_set():    
+        progress_bar_slot.progress(st.session_state['progress_num'], st.session_state['progress_text'])
+        time.sleep(1)
         
-progress_bar_slot.progress(100, "Done!")
-ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='final_ai_output')
-st.session_state['exec_thread'] = None
-progress_bar_slot.empty()
+    progress_bar_slot.progress(100, "Done!")
+    ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='final_ai_output')
+    st.session_state['exec_thread'] = None
+    progress_bar_slot.empty()
 
