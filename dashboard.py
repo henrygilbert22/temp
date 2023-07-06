@@ -85,36 +85,32 @@ def start_summarize_runner(website_url: Optional[str]):
     thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
     cntx_thread = add_script_run_ctx(thread)
     
-    ai_output_area.empty()
-    chat_response_button.empty()
-    chat_response_button.empty()
     cntx_thread.start()
-    
     st.session_state['exec_thread'] = cntx_thread
 
 
+logging.error(f"exec_thread: {st.session_state['exec_thread']}")
+if st.session_state['exec_thread'] is not None:
     
-col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2)
 
-with col1:
-    ai_output_area = st.empty()
-    ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='ai_output_1')
+    with col1:
+        ai_output_area = st.empty()
+        ai_output_area.text_area(label="AI Output", value=st.session_state['ai_output'], height=400, key='ai_output_1')
 
-with  col2:
-    
-    st.text_area(label="System Prompt", value=st.session_state['system_prompt'], height=200, key='system_prompt_input')
-    chat_response = st.empty()
-    chat_response.text_input(label="Enter a website URL to summarize and get AI suggestions", key='text_input')
-    
-    chat_response_button = st.empty()
-    chat_response_button.button(
-            label="Send Response",
-            type="primary",
-            on_click=start_summarize_runner,
-            args=(chat_response,),
-            key='text_input_button')
-    
-    progress_bar_slot = st.empty()
+    with  col2:
+        
+        st.text_area(label="System Prompt", value=st.session_state['system_prompt'], height=200, key='system_prompt_input')
+        chat_response = st.text_input(label="Enter a website URL to summarize and get AI suggestions", key='text_input')
+        
+        chat_response_button = st.button(
+                label="Send Response",
+                type="primary",
+                on_click=start_summarize_runner,
+                args=(chat_response,),
+                key='text_input_button')
+        
+        progress_bar_slot = st.empty()
 
 
 
