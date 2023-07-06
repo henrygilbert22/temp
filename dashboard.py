@@ -84,11 +84,9 @@ def start_summarize_runner(website_url: Optional[str]):
     shared_dict['output'] = ""
     thread_event.set()
     thread = Thread(target=summarize, args=(website_url, chatgpt_util, tokenizer, thread_event, shared_dict,), daemon=True)
-    #cntx_thread = add_script_run_ctx(thread)
-    
-    #cntx_thread.start()
-    thread.start()
-    st.session_state['exec_thread'] = thread
+    cntx_thread = add_script_run_ctx(thread)
+    cntx_thread.start()
+    st.session_state['exec_thread'] = cntx_thread
 
 
 logging.error(f"exec_thread: {st.session_state['exec_thread']}")
@@ -108,8 +106,8 @@ with  col2:
     chat_response_button = st.button(
             label="Send Response",
             type="primary",
-            on_click=start_summarize_runner,
-            args=(chat_response,),
+            on_click=summarize,
+            args=(chat_response,chatgpt_util, tokenizer, thread_event, shared_dict,),
             key='text_input_button')
     
     progress_bar_slot = st.empty()
