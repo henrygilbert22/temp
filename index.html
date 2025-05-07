@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nashville High-Rise Condo Market Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+            overflow-x: hidden; 
+        }
+        .section {
+            min-height: 80vh;
+            padding-top: 6rem; 
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 300px; 
+            width: 100%;
+            max-width: 600px;
+        }
+        .active-nav {
+            font-weight: 600;
+            color: #4F46E5; /* Indigo-600 */
+            border-bottom: 2px solid #4F46E5;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .animate-on-scroll.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .interactive-card {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        #mobile-menu {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        #mobile-menu.open {
+            max-height: 500px; 
+            opacity: 1;
+        }
+
+        /* Chatbot Styles */
+        #chatbot-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4F46E5; /* Indigo-600 */
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, background-color 0.2s;
+            z-index: 1000;
+        }
+        #chatbot-toggle:hover {
+            transform: scale(1.1);
+            background-color: #4338CA; /* Indigo-700 */
+        }
+        #chatbot-window {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            max-width: calc(100vw - 40px); /* Ensure it fits on small screens */
+            height: 480px; /* Increased height slightly */
+            max-height: calc(100vh - 120px); /* Ensure it fits on small screens */
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none; 
+            z-index: 999;
+        }
+        #chatbot-window.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto; 
+        }
+        #chatbot-header {
+            background-color: #4F46E5; 
+            color: white;
+            padding: 12px 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+        #close-chatbot {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem; /* Slightly larger close icon */
+            line-height: 1;
+            cursor: pointer;
+        }
+        #chatbot-messages {
+            flex-grow: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #F9FAFB; /* Gray-50 for message background */
+        }
+        .chat-message {
+            padding: 10px 14px; /* Slightly more padding */
+            border-radius: 18px;
+            max-width: 85%; /* Allow slightly wider messages */
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+        .user-message {
+            background-color: #C7D2FE; /* Indigo-200 */
+            color: #3730A3; /* Indigo-800 */
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .bot-message {
+            background-color: #E5E7EB; /* Gray-200 */
+            color: #1F2937; /* Gray-800 */
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .bot-message.loading span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: #4B5563; /* Gray-600 */
+            border-radius: 50%;
+            animation: botTyping 1s infinite ease-in-out;
+        }
+        .bot-message.loading span:nth-child(2) { animation-delay: 0.2s; }
+        .bot-message.loading span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes botTyping {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        #chatbot-input-area {
+            display: flex;
+            padding: 12px;
+            border-top: 1px solid #E5E7EB; 
+            background-color: white;
+            flex-shrink: 0; /* Prevent input area from shrinking */
+        }
+        #chatbot-input {
+            flex-grow: 1;
+            border: 1px solid #D1D5DB; 
+            padding: 10px 14px; /* Increased padding */
+            border-radius: 20px; /* More rounded */
+            margin-right: 8px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        #chatbot-input:focus {
+            border-color: #4F46E5; /* Indigo-600 */
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+        #chatbot-send {
+            background-color: #4F46E5; 
+            color: white;
+            border: none;
+            padding: 0 16px; /* Adjusted padding for icon-like button */
+            border-radius: 20px; /* More rounded */
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #chatbot-send:hover {
+            background-color: #4338CA; 
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <nav class="bg-white shadow-md fixed w-full z-50 top-0">
+        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="#" class="text-xl font-semibold text-indigo-600">Nashville Condo Market</a>
+            <div class="hidden md:flex space-x-4">
+                <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm hover:bg-indigo-50 transition-colors duration-200">Overview</a>
+                <a href="#market-snapshot" class="nav-link px-3 py-2 rounded-md text-sm hover:bg-indigo-50 transition-colors duration-200">Market Snapshot</a>
+                <a href="#market-history" class="nav-link px-3 py-2 rounded-md text-sm hover:bg-indigo-50 transition-colors duration-200">History</a>
+                <a href="#key-players" class="nav-link px-3 py-2 rounded-md text-sm hover:bg-indigo-50 transition-colors duration-200">Key Players</a>
+                <a href="#record-sales" class="nav-link px-3 py-2 rounded-md text-sm hover:bg-indigo-50 transition-colors duration-200">Record Sales</a>
+                <a href="#top-listings" class="nav-link px-3 py-2 rounded-md text-sm hover:bg-indigo-50 transition-colors duration-200">Top Listings</a>
+                <a href="#market-dynamics" class="nav-link px-3 py-2 rounded-md text-sm hover:bg-indigo-50 transition-colors duration-200">Dynamics</a>
+                <a href="#future-outlook" class="nav-link px-3 py-2 rounded-md text-sm hover:bg-indigo-50 transition-colors duration-200">Outlook</a>
+            </div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-gray-700 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden bg-white shadow-lg">
+             <a href="#overview" class="block nav-link px-4 py-3 text-sm hover:bg-indigo-50 transition-colors duration-200">Overview</a>
+            <a href="#market-snapshot" class="block nav-link px-4 py-3 text-sm hover:bg-indigo-50 transition-colors duration-200">Market Snapshot</a>
+            <a href="#market-history" class="block nav-link px-4 py-3 text-sm hover:bg-indigo-50 transition-colors duration-200">History</a>
+            <a href="#key-players" class="block nav-link px-4 py-3 text-sm hover:bg-indigo-50 transition-colors duration-200">Key Players</a>
+            <a href="#record-sales" class="block nav-link px-4 py-3 text-sm hover:bg-indigo-50 transition-colors duration-200">Record Sales</a>
+            <a href="#top-listings" class="block nav-link px-4 py-3 text-sm hover:bg-indigo-50 transition-colors duration-200">Top Listings</a>
+            <a href="#market-dynamics" class="block nav-link px-4 py-3 text-sm hover:bg-indigo-50 transition-colors duration-200">Dynamics</a>
+            <a href="#future-outlook" class="block nav-link px-4 py-3 text-sm hover:bg-indigo-50 transition-colors duration-200">Outlook</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <section id="overview" class="section">
+            <div class="text-center mb-12 pt-8 animate-on-scroll">
+                <h1 class="text-4xl font-bold text-indigo-700 mb-4">Downtown Nashville High-Rise Condominium Market</h1>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                    Explore the rapid ascent of Nashville's luxury high-rise condo market, from its recent origins to record-breaking sales and future outlook.
+                </p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl interactive-card animate-on-scroll">
+                    <h3 class="text-indigo-600 font-semibold text-lg mb-2">Total $1M+ Sales Value (Last 3 Yrs)</h3>
+                    <p class="text-3xl font-bold text-gray-700">&gt;$200 Million</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl interactive-card animate-on-scroll" style="transition-delay: 0.1s;">
+                    <h3 class="text-indigo-600 font-semibold text-lg mb-2">Avg. Luxury Sale Price</h3>
+                    <p class="text-3xl font-bold text-gray-700">$1.5M - $2.0M</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl interactive-card animate-on-scroll" style="transition-delay: 0.2s;">
+                    <h3 class="text-indigo-600 font-semibold text-lg mb-2">Record Penthouse Sale</h3>
+                    <p class="text-3xl font-bold text-gray-700">$15 Million <span class="text-sm">(2024)</span></p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl interactive-card animate-on-scroll" style="transition-delay: 0.3s;">
+                    <h3 class="text-indigo-600 font-semibold text-lg mb-2">Current Top Listing</h3>
+                    <p class="text-3xl font-bold text-gray-700">$13 Million</p>
+                    <p class="text-xs text-gray-500">(Paramount Tower Penthouse)</p>
+                </div>
+            </div>
+            <div class="mt-12 text-center animate-on-scroll" style="transition-delay: 0.4s;">
+                 <img src="https://placehold.co/1200x400/6366F1/FFFFFF?text=Nashville+Skyline+Placeholder" alt="Nashville Skyline" class="rounded-lg shadow-md mx-auto">
+                 <p class="text-xs text-gray-400 mt-2">Placeholder image of Nashville Skyline</p>
+            </div>
+        </section>
+
+        <section id="market-snapshot" class="section">
+            <h2 class="text-3xl font-semibold text-center mb-10 text-indigo-700 animate-on-scroll">Market Snapshot: Luxury Sales</h2>
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-xl shadow-lg animate-on-scroll">
+                    <h3 class="text-xl font-semibold mb-4 text-center text-gray-700">Volume of $1M+ Sales (2021-2023)</h3>
+                    <div class="chart-container h-[350px]">
+                        <canvas id="salesVolumeChart"></canvas>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-4 text-center">Estimated over 100 total $1M+ condo transactions from 2021 through 2023, reflecting a surge in new high-end inventory.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg animate-on-scroll" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-semibold mb-4 text-center text-gray-700">Price Per Square Foot (New High-Rises)</h3>
+                     <div class="chart-container h-[350px]">
+                        <canvas id="pricePerSqFtChart"></canvas>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-4 text-center">New high-rises routinely achieve $700-$1,000+/sq.ft., with ultra-luxury penthouses far exceeding that (e.g., Four Seasons penthouse at $3,750/sq.ft.).</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="market-history" class="section">
+            <h2 class="text-3xl font-semibold text-center mb-10 text-indigo-700 animate-on-scroll">Market History & Evolution</h2>
+            <div class="relative">
+                <div class="border-l-2 border-indigo-500 ml-6 md:ml-0 md:border-l-0 md:border-t-2 md:pt-6">
+                    <div class="mb-8 md:flex md:items-start animate-on-scroll timeline-item">
+                        <div class="md:w-1/4 md:pr-8 md:text-right">
+                            <p class="text-lg font-semibold text-indigo-600">Pre-2006</p>
+                        </div>
+                        <div class="md:w-3/4 relative pl-6 md:pl-0 md:pt-0">
+                            <div class="timeline-dot absolute -left-2.5 top-1 md:top-auto md:-top-2.5 md:left-1/2 md:-translate-x-1/2 w-5 h-5 bg-indigo-500 rounded-full border-4 border-white"></div>
+                            <div class="bg-white p-4 rounded-lg shadow-md ml-4 md:ml-0">
+                                <h4 class="font-semibold text-gray-700">Early Days</h4>
+                                <p class="text-sm text-gray-600">Downtown Nashville had few or no residential towers.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-8 md:flex md:items-start animate-on-scroll timeline-item">
+                        <div class="md:w-1/4 md:pr-8 md:text-right">
+                            <p class="text-lg font-semibold text-indigo-600">2006</p>
+                        </div>
+                        <div class="md:w-3/4 relative pl-6 md:pl-0">
+                            <div class="timeline-dot absolute -left-2.5 top-1 md:top-auto md:-top-2.5 md:left-1/2 md:-translate-x-1/2 w-5 h-5 bg-indigo-500 rounded-full border-4 border-white"></div>
+                            <div class="bg-white p-4 rounded-lg shadow-md ml-4 md:ml-0">
+                                <h4 class="font-semibold text-gray-700">The Viridian</h4>
+                                <p class="text-sm text-gray-600">Opened as downtown’s first-ever condo high-rise (31 stories, 305 units), pioneering luxury urban living.</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="mb-8 md:flex md:items-start animate-on-scroll timeline-item">
+                        <div class="md:w-1/4 md:pr-8 md:text-right">
+                            <p class="text-lg font-semibold text-indigo-600">Late 2000s</p>
+                        </div>
+                        <div class="md:w-3/4 relative pl-6 md:pl-0">
+                            <div class="timeline-dot absolute -left-2.5 top-1 md:top-auto md:-top-2.5 md:left-1/2 md:-translate-x-1/2 w-5 h-5 bg-indigo-500 rounded-full border-4 border-white"></div>
+                            <div class="bg-white p-4 rounded-lg shadow-md ml-4 md:ml-0">
+                                <h4 class="font-semibold text-gray-700">Initial Boom</h4>
+                                <p class="text-sm text-gray-600">Encore (2008, 333 units), Icon in the Gulch (2008, 418 units), Terrazzo (2009, 109 units) establish downtown as a residential neighborhood.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-8 md:flex md:items-start animate-on-scroll timeline-item">
+                        <div class="md:w-1/4 md:pr-8 md:text-right">
+                            <p class="text-lg font-semibold text-indigo-600">Early 2010s</p>
+                        </div>
+                        <div class="md:w-3/4 relative pl-6 md:pl-0">
+                            <div class="timeline-dot absolute -left-2.5 top-1 md:top-auto md:-top-2.5 md:left-1/2 md:-translate-x-1/2 w-5 h-5 bg-indigo-500 rounded-full border-4 border-white"></div>
+                            <div class="bg-white p-4 rounded-lg shadow-md ml-4 md:ml-0">
+                                <h4 class="font-semibold text-gray-700">Post-Recession Lull</h4>
+                                <p class="text-sm text-gray-600">Condo development slowed significantly.</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="mb-8 md:flex md:items-start animate-on-scroll timeline-item">
+                        <div class="md:w-1/4 md:pr-8 md:text-right">
+                            <p class="text-lg font-semibold text-indigo-600">2014-2018</p>
+                        </div>
+                        <div class="md:w-3/4 relative pl-6 md:pl-0">
+                            <div class="timeline-dot absolute -left-2.5 top-1 md:top-auto md:-top-2.5 md:left-1/2 md:-translate-x-1/2 w-5 h-5 bg-indigo-500 rounded-full border-4 border-white"></div>
+                            <div class="bg-white p-4 rounded-lg shadow-md ml-4 md:ml-0">
+                                <h4 class="font-semibold text-gray-700">Resurgence</h4>
+                                <p class="text-sm text-gray-600">Twelve Twelve (2014), 505 on Church (2017, 45 stories - tallest residential), CityLights (2019) reignited high-rise development.</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="mb-8 md:flex md:items-start animate-on-scroll timeline-item">
+                        <div class="md:w-1/4 md:pr-8 md:text-right">
+                            <p class="text-lg font-semibold text-indigo-600">2021-Present</p>
+                        </div>
+                        <div class="md:w-3/4 relative pl-6 md:pl-0">
+                            <div class="timeline-dot absolute -left-2.5 top-1 md:top-auto md:-top-2.5 md:left-1/2 md:-translate-x-1/2 w-5 h-5 bg-indigo-500 rounded-full border-4 border-white"></div>
+                            <div class="bg-white p-4 rounded-lg shadow-md ml-4 md:ml-0">
+                                <h4 class="font-semibold text-gray-700">Landmark Luxury Towers</h4>
+                                <p class="text-sm text-gray-600">The Residences at Broadwest (2021), Four Seasons Private Residences (2022, record sales). The Paramount (upcoming, 60 stories) will be Tennessee's tallest.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 text-center animate-on-scroll">
+                 <h3 class="text-xl font-semibold mb-4 text-gray-700">Cumulative Condo Unit Growth</h3>
+                 <div class="chart-container h-[350px] mx-auto">
+                    <canvas id="unitGrowthChart"></canvas>
+                </div>
+                <p class="text-sm text-gray-600 mt-2">Illustrative growth of downtown condo units from 2006 to present.</p>
+            </div>
+        </section>
+
+        <section id="key-players" class="section">
+            <h2 class="text-3xl font-semibold text-center mb-10 text-indigo-700 animate-on-scroll">Key Players & Projects</h2>
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-8 animate-on-scroll">
+                <h3 class="text-2xl font-semibold text-gray-700 mb-3">Leading Developer: Tony Giarratana</h3>
+                <p class="text-gray-600 mb-4">Tony Giarratana has been highly influential, developing over 1,000 condos. His projects include The Cumberland (1999), Viridian (2006), Encore (2008), 505 (2017), and the upcoming Paramount tower.</p>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="border border-indigo-200 p-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200"><strong>Viridian (2006):</strong> Kickstarted downtown condo living.</div>
+                    <div class="border border-indigo-200 p-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200"><strong>505 on Church (2017):</strong> Tallest residential, luxury conversions.</div>
+                    <div class="border border-indigo-200 p-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200"><strong>The Paramount (Upcoming):</strong> 60 stories, 140 condos.</div>
+                </div>
+            </div>
+            <h3 class="text-2xl font-semibold text-center mb-6 text-gray-700 animate-on-scroll">Notable High-Rise Projects</h3>
+            <div class="overflow-x-auto bg-white p-4 rounded-xl shadow-lg animate-on-scroll">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stories</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Units</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notable Feature</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr class="hover:bg-gray-50 transition-colors duration-150"><td class="px-6 py-4 whitespace-nowrap">The Viridian</td><td class="px-6 py-4">2006</td><td class="px-6 py-4">31</td><td class="px-6 py-4">305</td><td class="px-6 py-4">First modern high-rise</td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-150"><td class="px-6 py-4 whitespace-nowrap">Encore</td><td class="px-6 py-4">2008</td><td class="px-6 py-4">20</td><td class="px-6 py-4">333</td><td class="px-6 py-4">SoBro District</td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-150"><td class="px-6 py-4 whitespace-nowrap">Icon in the Gulch</td><td class="px-6 py-4">2008</td><td class="px-6 py-4">22</td><td class="px-6 py-4">418</td><td class="px-6 py-4">Gulch District Anchor</td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-150"><td class="px-6 py-4 whitespace-nowrap">505 on Church</td><td class="px-6 py-4">2017</td><td class="px-6 py-4">45</td><td class="px-6 py-4">~200 (condo portion)</td><td class="px-6 py-4">Tallest residential</td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-150"><td class="px-6 py-4 whitespace-nowrap">Residences at Broadwest</td><td class="px-6 py-4">2021</td><td class="px-6 py-4">34</td><td class="px-6 py-4">196</td><td class="px-6 py-4">Conrad Hotel affiliation</td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-150"><td class="px-6 py-4 whitespace-nowrap">Four Seasons Private Residences</td><td class="px-6 py-4">2022</td><td class="px-6 py-4">40</td><td class="px-6 py-4">144</td><td class="px-6 py-4">5-star hotel services, record sales</td></tr>
+                        <tr class="hover:bg-gray-50 transition-colors duration-150"><td class="px-6 py-4 whitespace-nowrap">The Paramount</td><td class="px-6 py-4">Est. 2026</td><td class="px-6 py-4">60</td><td class="px-6 py-4">140</td><td class="px-6 py-4">Future tallest in TN</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="record-sales" class="section">
+            <h2 class="text-3xl font-semibold text-center mb-10 text-indigo-700 animate-on-scroll">Record-Breaking Sales</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 interactive-card animate-on-scroll">
+                    <h3 class="text-xl font-semibold text-indigo-600 mb-2">Four Seasons Penthouse</h3>
+                    <p class="text-4xl font-bold text-gray-800">$15M</p>
+                    <p class="text-gray-600">~4,000 sq ft, 2024. Purchased by Todd Graves. Shattered previous records.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 interactive-card animate-on-scroll" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-semibold text-indigo-600 mb-2">Broadwest Penthouses</h3>
+                    <p class="text-4xl font-bold text-gray-800">$14.8M</p>
+                    <p class="text-gray-600">Combined units, 6,865 sq ft. Ultra-luxury residence.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 interactive-card animate-on-scroll" style="transition-delay: 0.2s;">
+                    <h3 class="text-xl font-semibold text-indigo-600 mb-2">505 Tower Penthouse</h3>
+                    <p class="text-4xl font-bold text-gray-800">$9.6M</p>
+                    <p class="text-gray-600">Early 2025. Developer Tony Giarratana's personal unit.</p>
+                </div>
+            </div>
+             <div class="mt-8 text-center bg-white p-6 rounded-xl shadow-lg animate-on-scroll" style="transition-delay: 0.3s;">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">Evolution of Record Condo Prices</h3>
+                 <div class="chart-container h-[350px] mx-auto">
+                    <canvas id="recordPriceEvolutionChart"></canvas>
+                </div>
+                <p class="text-sm text-gray-600 mt-2">Illustrating the significant jump in top-tier condo sale prices.</p>
+            </div>
+        </section>
+
+        <section id="top-listings" class="section">
+            <h2 class="text-3xl font-semibold text-center mb-10 text-indigo-700 animate-on-scroll">Top 25 Current Luxury Condo Listings</h2>
+            <p class="text-center text-gray-600 mb-6 animate-on-scroll">Note: Listings are dynamic and subject to change. Prices are asking prices.</p>
+            <div class="overflow-x-auto bg-white p-4 rounded-xl shadow-lg animate-on-scroll">
+                <table class="min-w-full divide-y divide-gray-200" id="topListingsTable">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address / Unit</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price (USD)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Building/Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="market-dynamics" class="section">
+            <h2 class="text-3xl font-semibold text-center mb-10 text-indigo-700 animate-on-scroll">Market Dynamics: Demand & Absorption</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg animate-on-scroll">
+                    <h3 class="text-xl font-semibold mb-4 text-center text-gray-700">Luxury Segment Resilience</h3>
+                    <p class="text-2xl font-bold text-green-600 text-center mb-2">+8.2% YoY Growth</p>
+                    <p class="text-sm text-gray-600 text-center">(Luxury home sales >$1M, Early 2023)</p>
+                    <p class="text-sm text-gray-600 mt-4">Affluent buyers, many from out-of-state and less rate-sensitive, maintain robust demand for top-tier condos.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg animate-on-scroll" style="transition-delay: 0.1s;">
+                     <h3 class="text-xl font-semibold mb-4 text-center text-gray-700">Downtown Rental Vacancy Rate</h3>
+                     <div class="chart-container h-[250px]">
+                        <canvas id="rentalVacancyChart"></canvas>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-4 text-center">Recovery in the rental market (from ~20% in 2023 to 9.5% in Q1 2024) is expected to push more renters towards buying.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-lg md:col-span-2 animate-on-scroll" style="transition-delay: 0.2s;">
+                    <h3 class="text-xl font-semibold mb-4 text-center text-gray-700">Downtown Condo Buyer Profile</h3>
+                     <div class="chart-container h-[300px]">
+                        <canvas id="buyerProfileChart"></canvas>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-4 text-center">Diverse buyer pool including empty-nesters, investors, and out-of-region buyers.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="future-outlook" class="section">
+            <h2 class="text-3xl font-semibold text-center mb-10 text-indigo-700 animate-on-scroll">Future Outlook (Next 3 Years)</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-lg interactive-card animate-on-scroll">
+                    <h3 class="text-xl font-semibold text-indigo-600 mb-2">New Inventory Pipeline</h3>
+                    <p class="text-3xl font-bold text-gray-700">200-250 Units</p>
+                    <p class="text-sm text-gray-600">Expected by 2027, including The Paramount (140 condos).</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg interactive-card animate-on-scroll" style="transition-delay: 0.1s;">
+                    <h3 class="text-xl font-semibold text-indigo-600 mb-2">Price Trajectory</h3>
+                    <p class="text-3xl font-bold text-gray-700">Firm to Modest Rise</p>
+                    <p class="text-sm text-gray-600">Low-to-mid single-digit annual appreciation expected.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg interactive-card lg:col-span-1 md:col-span-2 animate-on-scroll" style="transition-delay: 0.2s;">
+                    <h3 class="text-xl font-semibold text-indigo-600 mb-2">Market Balance</h3>
+                    <p class="text-3xl font-bold text-gray-700">Balanced</p>
+                    <p class="text-sm text-gray-600">Neither severe shortage nor glut anticipated.</p>
+                </div>
+            </div>
+            <div class="mt-8 bg-white p-6 rounded-xl shadow-lg animate-on-scroll" style="transition-delay: 0.3s;">
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">Key Factors for Continued Growth:</h3>
+                <ul class="list-disc list-inside text-gray-600 space-y-1">
+                    <li>Strong Nashville population and job growth.</li>
+                    <li>Increasing desirability of downtown residential living.</li>
+                    <li>Attraction of regional and global buyers.</li>
+                    <li>Controlled pace of new construction.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16 py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p class="mb-2">&copy; <span id="currentYear"></span> Nashville Condo Market Report. For informational purposes only.</p>
+            <p class="text-sm text-gray-400">Data based on research up to Q1 2024 / Early 2025. Subject to change.</p>
+            <p class="text-xs text-gray-500 mt-4">Placeholder Image: Nashville Skyline from placehold.co</p>
+        </div>
+    </footer>
+
+    <button id="chatbot-toggle" title="Chat with AI Assistant">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zm-4 0H9v2h2V9z" clip-rule="evenodd" />
+        </svg>
+    </button>
+
+    <div id="chatbot-window">
+        <div id="chatbot-header">
+            <span>Nashville Market AI</span>
+            <button id="close-chatbot" title="Close Chat">&times;</button>
+        </div>
+        <div id="chatbot-messages">
+            <div class="chat-message bot-message">Hi there! Ask me anything about the Nashville condo market.</div>
+        </div>
+        <div id="chatbot-input-area">
+            <input type="text" id="chatbot-input" placeholder="Type your question...">
+            <button id="chatbot-send" title="Send Message">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.894 2.553a1 1 0 00-1.789 0l-2 4A1 1 0 008.999 8H11a1 1 0 00.894-1.447l-2-4z" />
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.973 4.973 0 00-1.648.908 1 1 0 101.296 1.524A3 3 0 0110 8v1.017l-1.621 1.621a1 1 0 001.414 1.414L10 11.446l.207.207a1 1 0 001.414-1.414L10 9.017V5z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Existing JavaScript (Mobile Menu, Year, Nav Scroll, Animations, Charts) ---
+        // (This part of the script remains the same as in your previous version)
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('open'); 
+        });
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+            });
+        });
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        const sections = document.querySelectorAll('.section');
+        const navLinks = document.querySelectorAll('.nav-link'); 
+        window.addEventListener('scroll', () => {
+            let currentSectionId = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - (document.querySelector('nav').offsetHeight + 20)) { 
+                    currentSectionId = section.getAttribute('id');
+                }
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active-nav');
+                if (link.getAttribute('href').substring(1) === currentSectionId) {
+                    link.classList.add('active-nav');
+                }
+            });
+        });
+        const scrollElements = document.querySelectorAll('.animate-on-scroll');
+        const elementInView = (el, dividend = 1) => {
+            const elementTop = el.getBoundingClientRect().top;
+            return ( elementTop <= (window.innerHeight || document.documentElement.clientHeight) / dividend );
+        };
+        const displayScrollElement = (element) => { element.classList.add('is-visible'); };
+        const handleScrollAnimation = () => {
+            scrollElements.forEach((el) => {
+                if (elementInView(el, 1.05)) { displayScrollElement(el); } 
+            });
+        }
+        handleScrollAnimation();
+        window.addEventListener('scroll', handleScrollAnimation);
+
+        const defaultChartJsPlugins = { /* ... existing chart plugins ... */ 
+            legend: { labels: { font: { family: 'Inter', size: 12 }, color: '#4B5563'}},
+            tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', titleFont: { family: 'Inter', weight: 'bold', size: 14 }, bodyFont: { family: 'Inter', size: 12 }, padding: 10, cornerRadius: 4, displayColors: true, 
+                callbacks: { label: function(context) {
+                    let label = context.dataset.label || ''; if (label) { label += ': '; }
+                    if (context.parsed.y !== null) {
+                        if (context.chart.id === 'recordPriceEvolutionChart') { label += '$' + context.parsed.y + 'M'; }
+                        else if (context.chart.id === 'pricePerSqFtChart') { label += '$' + context.parsed.y.toLocaleString(); }
+                        else { label += context.parsed.y.toLocaleString(); }
+                    } return label;
+                }}
+            }
+        };
+        const chartJsConfig = { plugins: defaultChartJsPlugins, scales: { y: { beginAtZero: true, ticks: { font: { family: 'Inter', size: 12 }, color: '#4B5563' }, grid: { color: '#E5E7EB' }}, x: { ticks: { font: { family: 'Inter', size: 12 }, color: '#4B5563'}, grid: { display: false }}}, responsive: true, maintainAspectRatio: false, animation: { duration: 800, easing: 'easeInOutQuart'}};
+        const chartJsDoughnutConfig = { plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, color: '#4B5563'}}, tooltip: defaultChartJsPlugins.tooltip }, responsive: true, maintainAspectRatio: false, animation: { duration: 800, easing: 'easeInOutQuart'}};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Existing Chart Initializations ---
+            // (Sales Volume Chart)
+            const salesVolumeCtx = document.getElementById('salesVolumeChart')?.getContext('2d');
+            if (salesVolumeCtx) { new Chart(salesVolumeCtx, { type: 'bar', data: { labels: ['2021', '2022', '2023'], datasets: [{ label: 'Estimated $1M+ Condo Sales', data: [35, 40, 45], backgroundColor: 'rgba(79, 70, 229, 0.7)', borderColor: 'rgba(79, 70, 229, 1)', borderWidth: 1, borderRadius: 5, }] }, options: chartJsConfig }); }
+            // (Price Per SqFt Chart)
+            const pricePerSqFtCtx = document.getElementById('pricePerSqFtChart')?.getContext('2d');
+            if (pricePerSqFtCtx) { new Chart(pricePerSqFtCtx, { type: 'bar', data: { labels: ['Standard Luxury', 'Premium Units', 'Ultra-Luxury Penthouses', 'Record (Four Seasons)'], datasets: [{ label: 'Price per Sq. Ft. ($)', data: [850, 1000, 2000, 3750], backgroundColor: [ 'rgba(96, 165, 250, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(37, 99, 235, 0.7)', 'rgba(29, 78, 216, 0.7)' ], borderColor: [ 'rgba(96, 165, 250, 1)', 'rgba(59, 130, 246, 1)', 'rgba(37, 99, 235, 1)', 'rgba(29, 78, 216, 1)' ], borderWidth: 1, borderRadius: 5, }] }, options: chartJsConfig, id: 'pricePerSqFtChart' }); }
+            // (Unit Growth Chart)
+            const unitGrowthCtx = document.getElementById('unitGrowthChart')?.getContext('2d');
+            if (unitGrowthCtx) { new Chart(unitGrowthCtx, { type: 'line', data: { labels: ['Pre-2006', '2006', '2008', '2009', '2014', '2017', '2019', '2021', '2022', 'Est. 2026'], datasets: [{ label: 'Cumulative Downtown Condo Units', data: [0, 305, (305+333+418), (305+333+418+109), (305+333+418+109+286), (305+333+418+109+286+200), (305+333+418+109+286+200+50), (305+333+418+109+286+200+50+196), (305+333+418+109+286+200+50+196+144), (305+333+418+109+286+200+50+196+144+140)], fill: true, borderColor: 'rgb(79, 70, 229)', backgroundColor: 'rgba(79, 70, 229, 0.1)', tension: 0.2, pointRadius: 4, pointBackgroundColor: 'rgb(79, 70, 229)' }] }, options: chartJsConfig }); }
+            // (Record Price Evolution Chart)
+            const recordPriceCtx = document.getElementById('recordPriceEvolutionChart')?.getContext('2d');
+            if (recordPriceCtx) { new Chart(recordPriceCtx, { type: 'line', data: { labels: ['Previous Record', '505 Penthouse (2025)', 'Broadwest Combined', 'Four Seasons Penthouse (2024)', 'Paramount Potential'], datasets: [{ label: 'Record Sale Price ($M)', data: [9, 9.6, 14.8, 15, 25], borderColor: 'rgb(219, 39, 119)', backgroundColor: 'rgba(219, 39, 119, 0.1)', tension: 0.2, fill: true, pointRadius: 5, pointBackgroundColor: 'rgb(219, 39, 119)' }] }, options: chartJsConfig, id: 'recordPriceEvolutionChart' }); }
+            // (Top Listings Table)
+            const topListingsData = [ /* ... existing listings data ... */ 
+                { rank: 1, address: "1010 Church St #5801", price: 13000000, building: "Paramount Tower penthouse" },{ rank: 2, address: "1010 Church St #5802", price: 8500000, building: "Paramount Tower penthouse" },{ rank: 3, address: "227 2nd Ave N #101 & #401", price: 8000000, building: "Multi-level historic penthouse" },{ rank: 4, address: "1010 Church St #5803", price: 6500000, building: "Paramount Tower penthouse" },{ rank: 5, address: "1017 12th Ave S #B", price: 2999900, building: "Luxury brownstone-style near Gulch" },{ rank: 6, address: "1030 17th Ave S #401", price: 2999900, building: "Midtown high-rise condo" },{ rank: 7, address: "1212 Demonbreun St Unit C3", price: 2665000, building: "Pullman Gulch Union penthouse" },{ rank: 8, address: "1030 17th Ave S #101", price: 2450000, building: "Midtown high-rise condo" },{ rank: 9, address: "555 Church St #2301", price: 2400000, building: "Cumberland Penthouse, 2,345 sq ft" },{ rank: 10, address: "1212 Laurel St #2307", price: 2375000, building: "Twelve Twelve condo, Gulch" },{ rank: 11, address: "1212 Laurel St #2303", price: 2360000, building: "Twelve Twelve condo" },{ rank: 12, address: "1616 West End Ave #2602", price: 2350000, building: "Broadwest condo, 26th floor" },{ rank: 13, address: "1010 Church St #4504", price: 1485000, building: "Paramount Tower, high floor" },{ rank: 14, address: "208 3rd Ave N #400", price: 1325000, building: "Market Street loft, 2,310 sq ft" },{ rank: 15, address: "1010 Church St #4103", price: 1250000, building: "Paramount Tower" },{ rank: 16, address: "20 Rutledge St #606", price: 1250000, building: "CityLights Penthouse, 1,787 sq ft" },{ rank: 17, address: "515 Church St #3801", price: 1125000, building: "505 Tower condo" },{ rank: 18, address: "600 12th Ave S #201", price: 1100000, building: "Icon in the Gulch condo" },{ rank: 19, address: "1212 Demonbreun St Unit B2", price: 1081000, building: "Pullman Gulch Union condo" },{ rank: 20, address: "Various", price: 1000000, building: "Icon, 505, Pullman Gulch (Units #20-25)" },
+            ];
+            const listingsTableBody = document.querySelector('#topListingsTable tbody');
+            if (listingsTableBody) { topListingsData.forEach(item => { const row = listingsTableBody.insertRow(); row.classList.add('hover:bg-gray-100', 'transition-colors', 'duration-150'); row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.rank}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${item.address}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">$${item.price.toLocaleString()}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.building}</td>`; }); }
+            // (Rental Vacancy Chart)
+            const rentalVacancyCtx = document.getElementById('rentalVacancyChart')?.getContext('2d');
+            if (rentalVacancyCtx) { new Chart(rentalVacancyCtx, { type: 'bar', data: { labels: ['2023 Peak', 'Q1 2024'], datasets: [{ label: 'Downtown Rental Vacancy Rate (%)', data: [20, 9.5], backgroundColor: ['rgba(239, 68, 68, 0.7)', 'rgba(22, 163, 74, 0.7)'], borderColor: ['rgba(239, 68, 68, 1)', 'rgba(22, 163, 74, 1)'], borderWidth: 1, borderRadius: 5, }] }, options: chartJsConfig }); }
+            // (Buyer Profile Chart)
+            const buyerProfileCtx = document.getElementById('buyerProfileChart')?.getContext('2d');
+            if(buyerProfileCtx) { new Chart(buyerProfileCtx, { type: 'doughnut', data: { labels: ['Empty-Nesters', 'Investors', 'Out-of-State Buyers', 'Second Homeowners'], datasets: [{ label: 'Buyer Profile Segment', data: [30, 25, 25, 20], backgroundColor: [ 'rgba(59, 130, 246, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(234, 179, 8, 0.8)', 'rgba(139, 92, 246, 0.8)' ], hoverOffset: 8, borderColor: '#FFFFFF', borderWidth: 2 }] }, options: chartJsDoughnutConfig }); }
+
+
+            // --- Chatbot Functionality ---
+            const chatbotToggle = document.getElementById('chatbot-toggle');
+            const chatbotWindow = document.getElementById('chatbot-window');
+            const closeChatbotButton = document.getElementById('close-chatbot');
+            const chatbotMessages = document.getElementById('chatbot-messages');
+            const chatbotInput = document.getElementById('chatbot-input');
+            const chatbotSendButton = document.getElementById('chatbot-send');
+
+            const GEMINI_API_KEY = 'AIzaSyAvENmoMApAQD_GziHtIvN5Y_p8tZyi0B0'; // User provided API Key
+            // CORRECTED MODEL NAME AS PER USER REQUEST
+            const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${GEMINI_API_KEY}`;
+
+
+            chatbotToggle.addEventListener('click', () => {
+                chatbotWindow.classList.toggle('open');
+                if (chatbotWindow.classList.contains('open')) {
+                    chatbotInput.focus();
+                }
+            });
+
+            closeChatbotButton.addEventListener('click', () => {
+                chatbotWindow.classList.remove('open');
+            });
+
+            chatbotSendButton.addEventListener('click', sendMessageToBot);
+            chatbotInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessageToBot();
+                }
+            });
+
+            function addMessageToChat(text, sender) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('chat-message', sender === 'user' ? 'user-message' : 'bot-message');
+                
+                if (sender === 'bot' && text === 'loading') {
+                    messageElement.classList.add('loading');
+                    messageElement.innerHTML = '<span></span><span></span><span></span>'; // Typing indicator
+                } else {
+                    // Basic Markdown-like to HTML conversion for bot messages (bold and newlines)
+                    if (sender === 'bot') {
+                        let htmlText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+                        htmlText = htmlText.replace(/\n/g, '<br>'); // Newlines
+                        messageElement.innerHTML = htmlText;
+                    } else {
+                        messageElement.textContent = text;
+                    }
+                }
+                
+                chatbotMessages.appendChild(messageElement);
+                chatbotMessages.scrollTop = chatbotMessages.scrollHeight; // Auto-scroll to bottom
+            }
+
+            async function sendMessageToBot() {
+                const userText = chatbotInput.value.trim();
+                if (!userText) return;
+
+                addMessageToChat(userText, 'user');
+                chatbotInput.value = '';
+                addMessageToChat('loading', 'bot'); 
+
+                try {
+                    const prompt = `You are an AI assistant for a webpage displaying the "Downtown Nashville High-Rise Condominium Market Report".
+                    Please answer questions based on the typical information found in such a real estate market report.
+                    The report includes sections on: Overview, Market Snapshot (luxury sales, volume, average price, price/sqft), 
+                    Market History (timeline from pre-2006 to present, key buildings like Viridian, Encore, 505, Four Seasons, Paramount), 
+                    Key Players (developer Tony Giarratana), Record Sales (e.g., $15M Four Seasons penthouse), 
+                    Top 25 Listings, Market Dynamics (demand, absorption, buyer profiles, rental vacancy), and Future Outlook (new inventory, price trajectory).
+                    
+                    User question: "${userText}"
+                    
+                    Provide a concise and helpful answer. If the question is outside the scope of this Nashville condo market report, politely say so. Format important terms or figures in bold (e.g., **$15 Million** or **The Viridian**). Use newlines for readability if explaining multiple points.`;
+
+                    const response = await fetch(GEMINI_API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{ text: prompt }]
+                            }],
+                             safetySettings: [ // Added safety settings as good practice
+                               { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
+                               { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
+                               { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
+                               { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" }
+                             ]
+                        }),
+                    });
+
+                    const loadingMessage = chatbotMessages.querySelector('.bot-message.loading');
+                    if (loadingMessage) {
+                        loadingMessage.remove();
+                    }
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('Gemini API Error Response:', errorData); // Log the full error
+                        let displayErrorMessage = `Sorry, I encountered an API error (Status: ${response.status}).`;
+                        if (errorData.error && errorData.error.message) {
+                             displayErrorMessage += ` Message: ${errorData.error.message}`;
+                        }
+                        addMessageToChat(displayErrorMessage, 'bot');
+                        return;
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
+                        const botText = data.candidates[0].content.parts[0].text;
+                        addMessageToChat(botText, 'bot');
+                    } else if (data.promptFeedback && data.promptFeedback.blockReason) {
+                        console.warn('Gemini API prompt blocked:', data.promptFeedback.blockReason, data.promptFeedback.safetyRatings);
+                        addMessageToChat("I'm sorry, I can't respond to that query due to content restrictions. Please ask something else related to the Nashville condo market.", 'bot');
+                    } else {
+                        console.warn('Unexpected API response structure:', data);
+                        addMessageToChat("Sorry, I received an unexpected response from the AI. Please try again.", 'bot');
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching from Gemini API:', error);
+                    const loadingMessage = chatbotMessages.querySelector('.bot-message.loading');
+                    if (loadingMessage) {
+                        loadingMessage.remove();
+                    }
+                    addMessageToChat('Sorry, I am having trouble connecting. Please check your internet connection and try again.', 'bot');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
